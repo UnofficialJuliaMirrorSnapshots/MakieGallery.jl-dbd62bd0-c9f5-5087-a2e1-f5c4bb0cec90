@@ -155,10 +155,15 @@ const NO_GROUP = 0
 unique_names = Set(Symbol[])
 function unique_name!(name, unique_names = unique_names)
     funcname = Symbol(replace(lowercase(string(name)), r"[ #$!@#$%^&*()+]" => '_'))
-    i = 1
     while isdefined(AbstractPlotting, funcname) || (funcname in unique_names)
-        funcname = Symbol("$(funcname)_$i")
-        i += 1
+        name = string(funcname)
+        m = match(r"(.*)_(\d+)$", name)
+        if m !== nothing
+            name, num = m[1], parse(Int, m[2]) + 1
+        else
+            num = 1
+        end
+        funcname = Symbol("$(name)_$(num)")
     end
     push!(unique_names, funcname)
     funcname
@@ -533,10 +538,26 @@ function eval_example(
     steps = split(source, "@substep", keepempty = false)
     Random.seed!(42)
     if length(steps) == 1
-        return include_string(tmpmod, source, string(uname))
+        try
+            return include_string(tmpmod, source, string(uname))
+        catch e
+            println(stderr, "Example $(entry.title) failed with source:")
+            for line in split(source, "\n")
+                println(stderr, "    ", line)
+            end
+            rethrow(e)
+        end
     else
         return map(enumerate(steps)) do (i, source)
-            include_string(tmpmod, source, string(uname, "_", i))
+            try
+                return include_string(tmpmod, source, string(uname, "_", i))
+            catch e
+                println(stderr, "Example $(entry.title) failed with source:")
+                for line in split(source, "\n")
+                    println(stderr, "    ", line)
+                end
+                rethrow(e)
+            end
         end
     end
 end
