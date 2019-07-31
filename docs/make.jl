@@ -12,7 +12,7 @@ pathroot = normpath(@__DIR__, "..")
 docspath = joinpath(pathroot, "docs")
 srcpath = joinpath(docspath, "src")
 buildpath = joinpath(docspath, "build")
-mediapath = joinpath(homedir(), "ReferenceImages", "gallery")
+mediapath = joinpath(MakieGallery.REFIMGDIR, "gallery")
 
 # =============================================
 # automatically generate an overview of the atomic functions, using a source md file
@@ -36,7 +36,6 @@ open(path, "w") do io
         println(io, "```@docs")
         println(io, "$fname")
         println(io, "```\n")
-        help_attributes(io, func; extended = true)
         # add previews of all tags related to function
         for example in database
             fname in example.tags || continue
@@ -131,21 +130,47 @@ makedocs(
     doctest = false, clean = true,
     format = Documenter.HTML(prettyurls = false),
     sitename = "Makie.jl",
+    expandfirst = [
+        "basic-tutorials.md",
+        "statsmakie.md",
+        # "help_functions.md",
+        "animation.md",
+        "interaction.md",
+        "functions-overview.md",
+        "scenes.md",
+        "signatures.md",
+        "plot-attributes.md",
+        "colors.md",
+        "theming.md",
+        "cameras.md",
+        "backends.md",
+        # "extending.md",
+        "axis.md",
+        "recipes.md",
+        "output.md"
+    ],
     pages = Any[
         "Home" => "index.md",
         "Basics" => [
             "basic-tutorials.md",
             "statsmakie.md",
-            "help_functions.md",
+            # "help_functions.md",
+            "animation.md",
+            "interaction.md",
             "functions-overview.md",
+            "animation.md",
+            "interaction.md",
+        ],
+        "Documentation" => [
+            "scenes.md",
             "signatures.md",
             "plot-attributes.md",
             "colors.md",
             "theming.md",
+            "cameras.md",
+            "backends.md",
             # "extending.md",
             "axis.md",
-            "animation.md",
-            "interaction.md",
             "recipes.md",
             "output.md",
             # "layout.md",
@@ -153,7 +178,8 @@ makedocs(
         ],
         "Developer Documentation" => [
             "why-makie.md",
-        #     "devdocs.md",
+            "devdocs.md",
+            "gallery.md",
             "AbstractPlotting Reference" => "abstractplotting_api.md"
         ],
     ]
@@ -163,9 +189,10 @@ using Conda, Documenter
 using Base64
 # deploy
 ENV["DOCUMENTER_DEBUG"] = "true"
-if !haskey(ENV, "DOCUMENTER_KEY")
+if !haskey(ENV, "DOCUMENTER_KEY") && !haskey(ENV, "CI") # do this only if local, otherwise let Documenter handle it
     # Workaround for when deploying locally and silly Windows truncating the env variable
     # on the CI these should be set!
+    ENV["TRAVIS"] = :lolno
     ENV["TRAVIS_BRANCH"] = "master"
     ENV["TRAVIS_PULL_REQUEST"] = "false"
     ENV["TRAVIS_REPO_SLUG"] = "github.com/JuliaPlots/MakieGallery.jl.git"
